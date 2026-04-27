@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karma Devi Group — Chatbot</title>
+  <meta name="description" content="Official chatbot for Karma Devi Group, Basti" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: hsl(220, 70%, 25%);
+      --primary-fg: hsl(45, 100%, 96%);
+      --secondary: hsl(45, 80%, 55%);
+      --secondary-fg: hsl(220, 40%, 13%);
+      --background: hsl(220, 20%, 97%);
+      --foreground: hsl(220, 40%, 13%);
+      --card: hsl(0, 0%, 100%);
+      --muted: hsl(220, 15%, 92%);
+      --muted-fg: hsl(220, 10%, 45%);
+      --border: hsl(220, 15%, 88%);
+      --chat-bot: hsl(45, 30%, 95%);
+      --chat-bot-fg: hsl(220, 40%, 13%);
+      --radius: 0.75rem;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 100%;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--primary);
+      padding: 14px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.18);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .header-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-circle {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--secondary);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-circle svg { width: 24px; height: 24px; color: var(--primary); }
+    .header-text h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary-fg);
+      line-height: 1.2;
+    }
+    .header-text p {
+      font-size: 0.72rem;
+      color: rgba(255,248,220,0.7);
+      margin-top: 2px;
+    }
+    .online-badge {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.72rem;
+      color: rgba(255,248,220,0.7);
+    }
+    .pulse-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    /* ── MESSAGES ── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 16px;
+      scroll-behavior: smooth;
+    }
+    .messages-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .msg-row.user { justify-content: flex-end; }
+    .msg-row.bot  { justify-content: flex-start; }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .avatar.bot { background: var(--secondary); }
+    .avatar.user { background: hsl(220,70%,25%,0.12); }
+    .avatar svg { width: 16px; height: 16px; }
+    .avatar.bot svg { color: var(--primary); }
+    .avatar.user svg { color: var(--primary); }
+
+    .bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      font-size: 0.875rem;
+      line-height: 1.65;
+      border-radius: 18px;
+      word-break: break-word;
+    }
+    .bubble.bot {
+      background: var(--chat-bot);
+      color: var(--chat-bot-fg);
+      border-bottom-left-radius: 4px;
+    }
+    .bubble.user {
+      background: var(--primary);
+      color: var(--primary-fg);
+      border-bottom-right-radius: 4px;
+    }
+    .bubble a { color: inherit; text-decoration: underline; font-weight: 600; }
+
+    /* typing indicator */
+    .typing-dots { display: flex; gap: 4px; align-items: center; padding: 2px 0; }
+    .typing-dots span {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted-fg);
+      opacity: 0.5;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: .15s; }
+    .typing-dots span:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
+
+    /* ── QUICK QUESTIONS ── */
+    #quick-wrap {
+      padding: 8px 16px 4px;
+      flex-shrink: 0;
+    }
+    .quick-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .quick-btn {
+      font-size: 0.78rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--foreground);
+      cursor: pointer;
+      transition: background .15s, border-color .15s, transform .1s;
+      font-family: inherit;
+    }
+    .quick-btn:hover {
+      background: hsl(45,80%,90%);
+      border-color: var(--secondary);
+      transform: translateY(-1px);
+    }
+
+    /* ── INPUT BAR ── */
+    #input-bar {
+      border-top: 1px solid var(--border);
+      background: var(--card);
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+    .input-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    #user-input {
+      flex: 1;
+      background: var(--muted);
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      color: var(--foreground);
+      outline: none;
+      transition: box-shadow .15s;
+    }
+    #user-input::placeholder { color: var(--muted-fg); }
+    #user-input:focus { box-shadow: 0 0 0 3px hsl(220,70%,25%,.18); }
+
+    #send-btn {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background .15s, opacity .15s, transform .1s;
+      flex-shrink: 0;
+    }
+    #send-btn:hover { background: hsl(220,70%,20%); transform: scale(1.05); }
+    #send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    #send-btn svg { width: 18px; height: 18px; color: var(--primary-fg); }
+
+    /* scrollbar */
+    #messages::-webkit-scrollbar { width: 5px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="logo-circle">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Karma Devi Group</h1>
+        <p>Sansarpur Phutahiya, Basti &bull; Ask me anything</p>
+      </div>
+      <div class="online-badge">
+        <span class="pulse-dot"></span>
+        <span>Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MESSAGES -->
+  <div id="messages">
+    <div class="messages-inner" id="msg-list"></div>
+  </div>
+
+  <!-- QUICK QUESTIONS -->
+  <div id="quick-wrap">
+    <div class="quick-inner" id="quick-btns"></div>
+  </div>
+
+  <!-- INPUT -->
+  <div id="input-bar">
+    <div class="input-inner">
+      <input id="user-input" type="text" placeholder="Ask about KDG..." autocomplete="off" />
+      <button id="send-btn" disabled aria-label="Send">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ========================================================
+   KDG KNOWLEDGE BASE
+   ======================================================== */
+const KDG = {
+  about: `Karma Devi Group (KDG) was established in 2010 and is an educational powerhouse dedicated to transforming lives through high-quality, inclusive, and value-based education. Guided by its core belief in "Education with Purpose," KDG strives to meet the academic and professional aspirations of students across diverse disciplines. The campus is spread across 9 lush acres on the scenic banks of the River Kuano in Basti, Uttar Pradesh. Facilities include Wi-Fi-enabled infrastructure, two swimming pools, five playgrounds, three residential hostels, four well-stocked libraries, a dining hall, round-the-clock security, and organized transportation.`,
+
+  contact: {
+    address: "Karma Devi Group, Sansarpur Phutahiya, Basti-272001, Uttar Pradesh, India",
+    phone: "+91-6389086000",
+    website: "https://www.karmadevigroup.in/",
+    admission: "https://www.karmadevigroup.in/online-registrations",
+  },
+
+  stats: { students: "80,000+", faculty: "80+", programs: "80+", research: "80+" },
+
+  leadership: [
+    { name: "Mr. Om Narayan Singh",   role: "Honourable Chairman",             details: "Retired IAS Officer" },
+    { name: "Mrs. Neeta Singh",        role: "Manager",                          details: "" },
+    { name: "Mrs. Anshu Singh Gautam", role: "CEO",                              details: "" },
+    { name: "Mr. Yuzvendra Singh",     role: "CIO (Chief Information Officer)",  details: "" },
+    { name: "Dr. Mukesh Mishra",       role: "Principal, Karma Devi Smriti PG College", details: "" },
+    { name: "Dr. Raghunath Pal",       role: "Principal, DMS College",           details: "" },
+    { name: "Dr. Nilesh Gupta",        role: "Principal, PS Pharmacy College",   details: "" },
+    { name: "Dr. Ashraf Parveen",      role: "Principal, PS Nursing College",    details: "" },
+    { name: "Dr. Rachana Sinha",       role: "Head of Department, BCA",          details: "" },
+    { name: "Mr. Aditya Vikram Singh", role: "Dean of Academics",               details: "" },
+    { name: "Mr. Prabhat Mishra",      role: "Dean of Innovation",              details: "" },
+    { name: "Mr. Veer Pratap Singh",   role: "Station Director (Omni Radio 90.0 FM)", details: "" },
+    { name: "Mrs. Indrani Mandal",     role: "Principal, Omni International School", details: "" },
+    { name: "Mr. Akshat Sharma",       role: "AI Trainer - Learning and Development", details: "" },
+    { name: "Mr. Deepak Gupta",        role: "Full Stack Trainer",              details: "" },
+    { name: "Mr. Anurag Pandey",       role: "Head of Operations",              details: "" },
+    { name: "Mr. Lalmohan Singh",      role: "IT Admin",                        details: "" },
+  ],
+
+  institutions: [
+    { name: "Karma Devi Smriti PG & D.El.Ed College", description: "Post Graduate and D.El.Ed programs",          website: "https://ksm.ac.in/" },
+    { name: "DMS B.Ed & D.El.Ed College",              description: "B.Ed and D.El.Ed teacher training programs",  website: "https://dmssps.ac.in/" },
+    { name: "PS Pharmacy College",                     description: "Pharmacy education and training",             website: "https://pspharmacycollege.com/" },
+    { name: "PS School of Nursing & Para Medical Sciences", description: "Nursing and paramedical courses",        website: "https://psn.ac.in/" },
+    { name: "Omni International School (CBSE)",        description: "CBSE affiliated school for K-12 education",  website: "https://omniinternationalschool.com/" },
+    { name: "Omni Radio 90.0 FM",                      description: "Community radio station",                    website: "https://omniradio.karmadevigroup.in/" },
+    { name: "GD Goenka Public School, Bareilly",       description: "Excellence in education at Bareilly",        website: "" },
+    { name: "Omni Junior",                             description: "Early childhood education",                  website: "" },
+    { name: "Omni Hospital",                           description: "Healthcare services",                        website: "" },
+    { name: "DMS SP Law College",                      description: "Legal education and training",               website: "https://www.dmslawcollege.com/" },
+    { name: "Karma Vocational Academy",                description: "Vocational and skill-based training programs", website: "" },
+  ],
+
+  events: [
+    { name: "IllOMNItion (Youth Fest)",          description: "Celebrated on 1st January – Youth Day. Students showcase stalls and innovative business ideas." },
+    { name: "Spardha (Sports Arena)",            description: "Grand annual sporting event with 10+ institutions participating." },
+    { name: "Grand Goenka Fest",                 description: "Cultural and academic fest by GD Goenka Public School, Bareilly." },
+    { name: "Foundation Day",                    description: "Celebrated on 11th December, honoring years of excellence, growth, and service in education." },
+    { name: "Karmajyoti Rojgar Mahotsav (Job Fest)", description: "Largest Job Fest in Basti with 8000+ registrations, 32 companies, and 200+ placements." },
+  ],
+};
+
+/* ========================================================
+   SEARCH / RESPONSE ENGINE
+   ======================================================== */
+function searchKnowledge(query) {
+  const q = query.toLowerCase();
+
+  if (/^(hi|hello|hey|namaste|namaskar|greetings)\b/.test(q))
+    return `Namaste! 🙏 Welcome to Karma Devi Group (KDG) Basti chatbot. I can help you with information about our institutions, leadership, admissions, events, campus facilities, and more. How can I assist you today?`;
+
+  if (q.includes("chairman") || q.includes("om narayan"))
+    return `The Honourable Chairman of Karma Devi Group is **Mr. Om Narayan Singh**, a Retired IAS Officer. Under his visionary leadership, KDG has grown into a vibrant ecosystem of educational institutions.`;
+
+  if (q.includes("ceo") || q.includes("anshu singh"))
+    return `The CEO of Karma Devi Group is **Mrs. Anshu Singh Gautam**. She leads the strategic direction and overall management of the group.`;
+
+  if (q.includes("manager") || q.includes("neeta singh"))
+    return `The Manager of Karma Devi Group is **Mrs. Neeta Singh**. She oversees the management and administration of the group.`;
+
+  if (q.includes("cio") || q.includes("yuzvendra"))
+    return `The CIO (Chief Information Officer) of Karma Devi Group is **Mr. Yuzvendra Singh**. He leads the technology and information strategy.`;
+
+  if (q.includes("leadership") || q.includes("team") || q.includes("staff") || (q.includes("who") && (q.includes("work") || q.includes("member")))) {
+    const list = KDG.leadership.map(l => `• **${l.name}** — ${l.role}${l.details ? ` (${l.details})` : ""}`).join("\n");
+    return `Here is the leadership team of Karma Devi Group:\n\n${list}`;
+  }
+
+  for (const person of KDG.leadership) {
+    const parts = person.name.toLowerCase().replace(/mr\.|mrs\.|dr\./g, "").trim().split(" ");
+    if (parts.some(p => p.length > 2 && q.includes(p)))
+      return `**${person.name}** is the ${person.role} at Karma Devi Group.${person.details ? ` ${person.details}.` : ""}`;
+  }
+
+  if (q.includes("institution") || q.includes("college") || q.includes("school") || q.includes("university")) {
+    const list = KDG.institutions.map(i => `• **${i.name}** — ${i.description}${i.website ? ` ([Visit](${i.website}))` : ""}`).join("\n");
+    return `Karma Devi Group includes the following institutions:\n\n${list}`;
+  }
+
+  if (q.includes("pharmacy"))
+    return `**PS Pharmacy College** offers pharmacy education and training. Principal: **Dr. Nilesh Gupta**. Website: https://pspharmacycollege.com/`;
+
+  if (q.includes("nursing"))
+    return `**PS School of Nursing & Para Medical Sciences** offers nursing and paramedical courses. Principal: **Dr. Ashraf Parveen**. Website: https://psn.ac.in/`;
+
+  if (q.includes("bca"))
+    return `The BCA department is headed by **Dr. Rachana Sinha** (Head of Department, BCA) at Karma Devi Group.`;
+
+  if (q.includes("law"))
+    return `**DMS SP Law College** offers legal education and training. Website: https://www.dmslawcollege.com/`;
+
+  if (q.includes("radio") || q.includes("omni radio") || q.includes("fm"))
+    return `**Omni Radio 90.0 FM** is the community radio station of Karma Devi Group. Station Director: **Mr. Veer Pratap Singh**. Website: https://omniradio.karmadevigroup.in/`;
+
+  if (q.includes("omni school") || q.includes("omni international"))
+    return `**Omni International School** is a CBSE-affiliated school for K-12 education. Principal: **Mrs. Indrani Mandal**. Website: https://omniinternationalschool.com/`;
+
+  if (q.includes("event") || q.includes("fest") || q.includes("spardha") || q.includes("foundation day") || q.includes("job fest") || q.includes("karmajyoti")) {
+    const list = KDG.events.map(e => `• **${e.name}** — ${e.description}`).join("\n");
+    return `Karma Devi Group hosts several exciting events:\n\n${list}`;
+  }
+
+  if (q.includes("admission") || q.includes("apply") || q.includes("registration") || q.includes("enroll"))
+    return `For admissions, you can apply online at:\n**https://www.karmadevigroup.in/online-registrations**\n\nOr contact us at **+91-6389086000** for more details.`;
+
+  if (q.includes("contact") || q.includes("phone") || q.includes("address") || q.includes("location") || q.includes("where"))
+    return `📍 **Address:** ${KDG.contact.address}\n📞 **Phone:** ${KDG.contact.phone}\n🌐 **Website:** ${KDG.contact.website}`;
+
+  if (q.includes("campus") || q.includes("facilit") || q.includes("hostel") || q.includes("library") || q.includes("pool") || q.includes("playground"))
+    return `The KDG campus is spread across **9 lush acres** on the banks of River Kuano in Basti. Facilities include:\n\n• Wi-Fi-enabled infrastructure\n• 2 Swimming Pools\n• 5 Playgrounds\n• 3 Residential Hostels\n• 4 Well-stocked Libraries\n• Dining Hall\n• Round-the-clock Security\n• Organized Transportation`;
+
+  if (q.includes("about") || q.includes("what is") || q.includes("tell me") || q.includes("kdg") || q.includes("karma devi"))
+    return KDG.about;
+
+  if (q.includes("student") || q.includes("faculty") || q.includes("program") || q.includes("how many"))
+    return `Karma Devi Group in numbers:\n\n• **${KDG.stats.students}** Students\n• **${KDG.stats.faculty}** Faculty Members\n• **${KDG.stats.programs}** Programs\n• **${KDG.stats.research}** Research Projects`;
+
+  if (q.includes("value") || q.includes("principle") || q.includes("mission") || q.includes("vision"))
+    return `Karma Devi Group is guided by "**Education with Purpose**" and these core values:\n\n• Commitment to Learning\n• Inclusive Academic Culture\n• Respectful Interactions\n• Integrity and Responsibility`;
+
+  if (q.includes("dean"))
+    return `**Dean of Academics:** Mr. Aditya Vikram Singh\n**Dean of Innovation:** Mr. Prabhat Mishra`;
+
+  if (q.includes("ai trainer") || q.includes("akshat"))
+    return `**Mr. Akshat Sharma** is the AI Trainer for Learning and Development at Karma Devi Group.`;
+
+  if (q.includes("full stack") || q.includes("deepak gupta"))
+    return `**Mr. Deepak Gupta** is the Full Stack Trainer at Karma Devi Group.`;
+
+  if (q.includes("it admin") || q.includes("lalmohan"))
+    return `**Mr. Lalmohan Singh** is the IT Admin at Karma Devi Group.`;
+
+  if (q.includes("operation") || q.includes("anurag"))
+    return `**Mr. Anurag Pandey** is the Head of Operations at Karma Devi Group.`;
+
+  if (q.includes("principal") || q.includes("mukesh mishra")) {
+    const principals = KDG.leadership.filter(l => l.role.toLowerCase().includes("principal"));
+    const list = principals.map(p => `• **${p.name}** — ${p.role}`).join("\n");
+    return `Principals at Karma Devi Group:\n\n${list}`;
+  }
+
+  return `I'm sorry, I don't have specific information about that. Here are some topics I can help with:\n\n• **About KDG** — History and overview\n• **Leadership** — Chairman, CEO, Principals, and staff\n• **Institutions** — Colleges, schools, and academies\n• **Admissions** — How to apply\n• **Events** — Youth Fest, Spardha, Job Fest\n• **Campus & Facilities** — Hostels, libraries, sports\n• **Contact** — Address, phone, website\n\nTry asking about any of these!`;
+}
+
+/* ========================================================
+   RENDER MARKDOWN → HTML
+   ======================================================== */
+function renderMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br />')
+    .replace(/• /g, '• ')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
+/* ========================================================
+   DOM HELPERS
+   ======================================================== */
+const BOT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+const USER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+function appendMessage(text, sender) {
+  const list = document.getElementById("msg-list");
+  const row = document.createElement("div");
+  row.className = `msg-row ${sender}`;
+
+  if (sender === "bot") {
+    row.innerHTML = `
+      <div class="avatar bot">${BOT_ICON}</div>
+      <div class="bubble bot">${renderMarkdown(text)}</div>`;
+  } else {
+    row.innerHTML = `
+      <div class="bubble user">${renderMarkdown(text)}</div>
+      <div class="avatar user">${USER_ICON}</div>`;
+  }
+
+  list.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function showTyping() {
+  const list = document.getElementById("msg-list");
+  const row = document.createElement("div");
+  row.className = "msg-row bot";
+  row.id = "typing-indicator";
+  row.innerHTML = `
+    <div class="avatar bot">${BOT_ICON}</div>
+    <div class="bubble bot">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+    </div>`;
+  list.appendChild(row);
+  scrollBottom();
+}
+
+function hideTyping() {
+  const el = document.getElementById("typing-indicator");
+  if (el) el.remove();
+}
+
+function scrollBottom() {
+  const m = document.getElementById("messages");
+  m.scrollTop = m.scrollHeight;
+}
+
+/* ========================================================
+   QUICK QUESTIONS
+   ======================================================== */
+const QUICK_QUESTIONS = [
+  "Tell me about KDG",
+  "Who is the Chairman?",
+  "List all institutions",
+  "Admission process",
+  "Campus facilities",
+  "Leadership team",
+];
+
+let quickShown = true;
+function renderQuickBtns() {
+  const wrap = document.getElementById("quick-wrap");
+  const container = document.getElementById("quick-btns");
+  container.innerHTML = "";
+  QUICK_QUESTIONS.forEach(q => {
+    const btn = document.createElement("button");
+    btn.className = "quick-btn";
+    btn.textContent = q;
+    btn.onclick = () => handleSend(q);
+    container.appendChild(btn);
+  });
+  wrap.style.display = quickShown ? "block" : "none";
+}
+
+/* ========================================================
+   SEND LOGIC
+   ======================================================== */
+function handleSend(text) {
+  const input = document.getElementById("user-input");
+  const msg = text || input.value.trim();
+  if (!msg) return;
+
+  // hide quick buttons after first message
+  if (quickShown) {
+    quickShown = false;
+    document.getElementById("quick-wrap").style.display = "none";
+  }
+
+  appendMessage(msg, "user");
+  input.value = "";
+  document.getElementById("send-btn").disabled = true;
+
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    const response = searchKnowledge(msg);
+    appendMessage(response, "bot");
+  }, 600 + Math.random() * 800);
+}
+
+/* ========================================================
+   INIT
+   ======================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+  // Welcome message
+  appendMessage(
+    "Namaste! 🙏 Welcome to the **Karma Devi Group (KDG) Basti** chatbot. I can help you with information about our institutions, leadership, admissions, events, and campus life. How can I help you today?",
+    "bot"
+  );
+
+  renderQuickBtns();
+
+  const input = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
+
+  input.addEventListener("input", () => {
+    sendBtn.disabled = !input.value.trim();
+  });
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") handleSend();
+  });
+  sendBtn.addEventListener("click", () => handleSend());
+});
+</script>
+</body>
+</html>
